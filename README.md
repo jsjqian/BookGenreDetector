@@ -29,7 +29,12 @@ converted back to integers when it was time to display the results. That means
 if there was a score of 10.5 and 10.2 that were vying for first, 10.5 would
 be displayed first as 10 and then 10.2 as 10. This would put them out of
 alphabetical order but would be more accurate as to which genre was higher.
-### 3. Incorrect input
+### 3. No matches
+In the off chance that a book has no matching genres, a message will be shown
+for that book that lets the user know there were no matching genres. This is
+possible and made more likely by the fact that there is no check for upper and
+lower case letters.
+### 4. Incorrect input
 I did not really check for incorrect input other than making sure the input
 files were JSON and CSV. If a title or description is missing, that is up to the
 user to find and fix. If a keyword entry did not follow the string, string, int
