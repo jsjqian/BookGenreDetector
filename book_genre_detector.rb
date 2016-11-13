@@ -77,17 +77,22 @@ class Book
     top_genres = {}
     sorted_genres.each do |genre| # Find the genres associated with that score
       genre_score = @genres[genre]
-      if (top_scores.include?(genre_score)) then
+      if (top_scores.include?(genre_score)) then # Check if it is a top score
         top_genres[genre] = genre_score
-        top_scores.delete_at(top_scores.index(genre_score))
+        top_scores.delete_at(top_scores.index(genre_score)) # Remove that score
       end
     end
     return top_genres
   end
  
   def print_genres
-    top_genres.each do |genre, score|
-      puts genre + ", " + score.to_i.to_s
+    genres = top_genres
+    if (genres.size == 0) then # Check if there were any matches
+      puts "No matching genres"
+    else
+      top_genres.each do |genre, score|
+        puts genre + ", " + score.to_i.to_s
+      end
     end
   end
 
