@@ -1,6 +1,6 @@
 # Book Genre Detector
 ## How to run:
-./book_genre_detector.rb <books.json> <keywords.csv>
+./book_genre_detector.rb books.json keywords.csv
 
 Make sure Ruby is installed and the JSON and CSV packages are available.
 
