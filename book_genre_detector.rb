@@ -40,16 +40,17 @@ end
 # Reading JSON for books
 
 books = File.read(ARGV[0])
-book_hash = JSON.parse(books)
+books_hash = JSON.parse(books)
 
 # Reading CSV for genres
 
-genres = CSV.read(ARGV[1])
+genre_values = CSV.read(ARGV[1])
+genre_values.shift
 
 class Book
  
   @title
-  @genres
+  @genres = {}
 
   def initialize(title)
     @title = title
@@ -60,7 +61,7 @@ class Book
     @genres[genre] = score
   end
 
-  def self.top_genres
+  def print_genres
     scores = @genres.values
     scores.sort!
     top_scores = scores.first(3)
@@ -69,17 +70,12 @@ class Book
     sorted_genres.each do |genre|
       genre_score = @genres[genre]
       if (top_scores.include?(genre_score)) then
-        top_genre[genre] = genre_score
+        top_genres[genre] = genre_score
         top_scores.delete_at(top_scores.index(genre_score))
       end
     end
-    return top_genres
-  end
-
-  def print_genres
-    top_genres = self.class.top_genres
     top_genres.each do |genre, score|
-      puts genre + ", " + score
+      puts genre + ", " + score.to_i.to_s
     end
   end
 
@@ -89,13 +85,44 @@ end
 # Calculating genres for each book #
 ####################################
 
-scores = {}
+book_list = {}
 
-book_hash.each do |book, description|
-  
+books_hash.each do |book|
+  title = book["title"]
+  new_book = Book.new(title)
+  description = book["description"]
+  genres = {}
+  genre_values.each do |row|
+    genre = row[0]
+    keyword = row[1].strip
+    value = row[2].strip.to_i
+    instances = description.scan( /#{keyword}/ ).size 
+    if (instances > 0) then
+      if (genres.has_key?(genre)) then
+        genres[genre][0] = genres[genre][0] + instances
+        genres[genre][1] = genres[genre][1] + value
+        genres[genre][2] = genres[genre][2] + 1
+      else
+        genres[genre] = [instances, value, 1]
+      end
+    end
+  end
+  genres.each do |genre, values|
+    score = values[0] * Float(values[1] / values[2])
+    new_book.add_genre(genre, score)
+  end
+  book_list[title] = new_book
 end
 
+################################################
+# Print out each book and its respective score #
+################################################
 
-
+sorted_titles = book_list.keys.sort!
+sorted_titles.each do |book|
+  puts book
+  book_list[book].print_genres
+  puts
+end
 
 
