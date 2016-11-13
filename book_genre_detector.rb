@@ -12,7 +12,6 @@ require 'csv'
 # words.
 
 # Checking for proper arguments
-
 if (ARGV[0] == nil || ARGV[1] == nil) then
   puts "Missing arguments."
   puts "Expected format: \".book_genre_detector.rb <books.json> <genres.csv>\""
@@ -20,16 +19,14 @@ if (ARGV[0] == nil || ARGV[1] == nil) then
 end
 
 # First argument must be a JSON file
-
 if (!(/.json/.match(ARGV[0]))) then
-  puts ARGV[0] + " is not a JSON file."
+  puts "Error: " + ARGV[0] + " is not a JSON file."
   exit
 end
 
 # Second argument must be a CSV file
-
 if (!(/.csv/.match(ARGV[1]))) then
-  puts ARGV[1] + " is not a CSV file."
+  puts "Error: " + ARGV[1] + " is not a CSV file."
   exit
 end
 
@@ -38,42 +35,57 @@ end
 #######################
 
 # Reading JSON for books
-
 books = File.read(ARGV[0])
 books_hash = JSON.parse(books)
 
 # Reading CSV for genres
-
 genre_values = CSV.read(ARGV[1])
-genre_values.shift
+genre_values.shift # Remove the first row
+genre_values.each do |row|
+  row[1].strip!
+  row[2].strip!
+end
+
+#################################
+# Book class for storing values #
+#################################
 
 class Book
  
   @title
+  @description
   @genres = {}
 
-  def initialize(title)
+  # Creates the book with a title and empty hash of genres
+  def initialize(title, description)
     @title = title
+    @description = description
     @genres = {}
   end
 
+  # Add a genre and its score to the hash
   def add_genre(genre, score)
     @genres[genre] = score
   end
 
-  def print_genres
-    scores = @genres.values
-    scores.sort!
-    top_scores = scores.first(3)
+  # Calculate the top 3 genres
+  def top_genres
+    scores = @genres.values 
+    scores.sort!.reverse!
+    top_scores = scores.first(3) # Get the top 3 scores
     sorted_genres = @genres.keys.sort
     top_genres = {}
-    sorted_genres.each do |genre|
+    sorted_genres.each do |genre| # Find the genres associated with that score
       genre_score = @genres[genre]
       if (top_scores.include?(genre_score)) then
         top_genres[genre] = genre_score
         top_scores.delete_at(top_scores.index(genre_score))
       end
     end
+    return top_genres
+  end
+ 
+  def print_genres
     top_genres.each do |genre, score|
       puts genre + ", " + score.to_i.to_s
     end
@@ -85,17 +97,23 @@ end
 # Calculating genres for each book #
 ####################################
 
+# List of all the books
 book_list = {}
 
+# For each book, search the entire description for instances of each keyword in
+# the CSV file provided and then calculate the score for that particular genre.
+# If the no keywords of a genre are present, do not give it a score.
 books_hash.each do |book|
-  title = book["title"]
-  new_book = Book.new(title)
-  description = book["description"]
+  title = book["title"] # Extract title and create book
+  description = book["description"] # Extract description
+  new_book = Book.new(title, description)
   genres = {}
+  # Scan the description for instances of each keyword and store the instances,
+  # value for that keyword, and the number of unique keywords.
   genre_values.each do |row|
     genre = row[0]
-    keyword = row[1].strip
-    value = row[2].strip.to_i
+    keyword = row[1]
+    value = row[2].to_i
     instances = description.scan( /#{keyword}/ ).size 
     if (instances > 0) then
       if (genres.has_key?(genre)) then
@@ -107,10 +125,12 @@ books_hash.each do |book|
       end
     end
   end
+  # Add all of the found genres to the book stored as floats
   genres.each do |genre, values|
     score = values[0] * Float(values[1] / values[2])
     new_book.add_genre(genre, score)
   end
+  # Add this book to the book list
   book_list[title] = new_book
 end
 
@@ -118,11 +138,10 @@ end
 # Print out each book and its respective score #
 ################################################
 
+# Sort the books so they are displayed in alphabetical order
 sorted_titles = book_list.keys.sort!
 sorted_titles.each do |book|
-  puts book
-  book_list[book].print_genres
+  puts book # Book title
+  book_list[book].print_genres # The top 3 genres
   puts
 end
-
-
